@@ -8,7 +8,7 @@
     <script src="/config.js"></script>
     <script src="/shared.js"></script>
   </head>
-  <body>
+  <body class="host">
     <div class="card">
       <h1>Join the game</h1>
       <p>Scan to join on your phone:</p>
@@ -16,6 +16,8 @@
       <p>or go to</p>
       <ul id="join-urls"></ul>
       <p id="status">Lobby offline.</p>
+      <p id="phase">Phase: Lobby</p>
+      <button id="start-game" disabled>Start Game</button>
       <p><strong>Players (<span id="player-count">0</span>)</strong></p>
       <ul id="players"></ul>
     </div>

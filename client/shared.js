@@ -18,7 +18,17 @@ window.AppShared = {
     }
     if (playersEl) {
       playersEl.innerHTML = (state.players || [])
-        .map((player) => `<li>${player.nickname}</li>`)
+        .map((player) => {
+          const tags = [];
+          if (player.ready) {
+            tags.push("ready");
+          }
+          if (player.connected === false) {
+            tags.push("away");
+          }
+          const suffix = tags.length ? ` (${tags.join(", ")})` : "";
+          return `<li>${player.nickname}${suffix}</li>`;
+        })
         .join("");
     }
   },

@@ -17,6 +17,19 @@ const app = express();
 const clientPath = path.resolve(__dirname, "..", "..", "client");
 const vendorPath = path.resolve(__dirname, "..", "node_modules", "colyseus.js", "dist");
 
+const parseEnvBool = (value: string | undefined, fallback: boolean) => {
+  if (value === undefined) {
+    return fallback;
+  }
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+};
+
+const lobbyConfig = {
+  requireReady: parseEnvBool(process.env.LOBBY_REQUIRE_READY, false),
+  allowRejoin: parseEnvBool(process.env.LOBBY_ALLOW_REJOIN, true),
+  allowMidgameJoin: parseEnvBool(process.env.LOBBY_ALLOW_MIDGAME_JOIN, false)
+};
+
 const getLanAddresses = () => {
   const interfaces = os.networkInterfaces();
   const addresses: string[] = [];
@@ -82,7 +95,7 @@ const gameServer = new Server({
   transport: new WebSocketTransport({ server })
 });
 
-gameServer.define("lobby", LobbyRoom);
+gameServer.define("lobby", LobbyRoom, { config: lobbyConfig });
 
 // Start HTTP + WebSocket server for rooms and static client.
 gameServer.listen(port).then(() => {

@@ -23,7 +23,7 @@ Local-first party-game framework for LexPlay / Run Jump Dev. The goal is a Jackb
 - `client/` static phone UI served by the host machine
 - `protocol/` message format documentation
 
-The host page (`/host`) shows a QR code for joining and a live player list. Players join with nicknames and are considered ready immediately (no ready toggle).
+The host page (`/host`) shows a QR code for joining and a live player list. Players join with nicknames and can ready up if `LOBBY_REQUIRE_READY=true`.
 
 ## Local dev
 
@@ -58,6 +58,17 @@ set HOST_ADDRESS=192.168.1.50
 npm run dev
 ```
 
+## Lobby configuration
+
+These flags let game teams decide lobby behavior without code changes:
+
+```
+set LOBBY_REQUIRE_READY=true
+set LOBBY_ALLOW_REJOIN=true
+set LOBBY_ALLOW_MIDGAME_JOIN=false
+npm run dev
+```
+
 ## Project status
 
-Early development. Next planned steps include host-initiated game start events and Unity host integration.
+Early development. Next planned steps include Unity host integration and the first game flow.
