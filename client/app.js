@@ -6,18 +6,13 @@ const nicknameInput = document.getElementById("nickname");
 const playerCountEl = document.getElementById("player-count");
 const playersEl = document.getElementById("players");
 
+const { roomName } = window.AppConfig;
+const { ensureColyseus, getWsEndpoint, renderPlayers } = window.AppShared;
+
 let room = null;
 
-const updatePlayers = (state) => {
-  playerCountEl.textContent = state.count ?? 0;
-  playersEl.innerHTML = (state.players || [])
-    .map((player) => `<li>${player.nickname}</li>`)
-    .join("");
-};
-
 const connect = async () => {
-  if (typeof Colyseus === "undefined") {
-    statusEl.textContent = "Client library failed to load.";
+  if (!ensureColyseus(statusEl)) {
     return;
   }
 
@@ -25,11 +20,10 @@ const connect = async () => {
   statusEl.textContent = "Connecting...";
 
   try {
-    const protocol = location.protocol === "https:" ? "wss" : "ws";
-    const client = new Colyseus.Client(`${protocol}://${location.host}`);
+    const client = new Colyseus.Client(getWsEndpoint());
     const nickname = nicknameInput.value.trim();
 
-    room = await client.joinOrCreate("lobby", { nickname });
+    room = await client.joinOrCreate(roomName, { nickname });
     statusEl.textContent = `Connected: ${room.sessionId}`;
     pingButton.disabled = false;
 
@@ -37,7 +31,9 @@ const connect = async () => {
       logEl.textContent = `Server: ${JSON.stringify(message)}`;
     });
 
-    room.onMessage("lobby:state", updatePlayers);
+    room.onMessage("lobby:state", (state) => {
+      renderPlayers(playersEl, playerCountEl, state);
+    });
 
     pingButton.addEventListener("click", () => {
       room.send("client:event", {

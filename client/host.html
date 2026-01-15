@@ -3,29 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>LAN Party Kit - Client</title>
+    <title>LAN Party Kit - Host</title>
     <link rel="stylesheet" href="/styles.css" />
     <script src="/config.js"></script>
     <script src="/shared.js"></script>
   </head>
   <body>
-    <div class="card compact">
-      <h1>LAN Party Kit</h1>
-      <p id="status">Choose a nickname to join.</p>
-
-      <label for="nickname">Nickname</label>
-      <input id="nickname" maxlength="20" placeholder="John Doe" />
-      <div class="row">
-        <button id="join">Join lobby</button>
-        <button id="ping" disabled>Send ping</button>
-      </div>
-
+    <div class="card">
+      <h1>Join the game</h1>
+      <p>Scan to join on your phone:</p>
+      <img id="qr" alt="Join QR code" />
+      <p>or go to</p>
+      <ul id="join-urls"></ul>
+      <p id="status">Lobby offline.</p>
       <p><strong>Players (<span id="player-count">0</span>)</strong></p>
       <ul id="players"></ul>
-      <p id="log"></p>
     </div>
 
     <script src="/vendor/colyseus.js"></script>
-    <script src="/app.js"></script>
+    <script src="/host.js"></script>
   </body>
 </html>
