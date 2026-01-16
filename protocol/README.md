@@ -6,8 +6,10 @@ This folder documents client/host/server message formats.
 
 ### Client -> Server
 - `joinOrCreate("lobby")` options:
-  - `{ nickname?: string, role?: "player" | "spectator" | "host", playerToken?: string }`
+  - `{ nickname?: string, role?: "player" | "spectator" | "host", playerToken?: string, avatar?: string }`
   - `role: "host"` is only allowed from the server machine.
+  - Join can fail with `ServerError` message `LOBBY_FULL_PLAYER` or `LOBBY_FULL_SPECTATOR` when
+    the lobby is at capacity for the selected role.
 - `client:event` payload:
   - `{ type: string, payload?: unknown }`
 - `client:ping` payload:
@@ -33,9 +35,9 @@ This folder documents client/host/server message formats.
 - `server:pong` payload:
   - `{ sentAt: number, receivedAt: number, pingMs: number | null }`
 - `lobby:state` payload:
-  - `{ count: number, totalCount: number, readyCount: number, allReady: boolean, phase: "lobby" | "in-game", settings: { requireReady: boolean, allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean }, players: Array<{ id: string, nickname: string, ready: boolean, connected: boolean, pingMs: number | null, avatar: string }>, spectatorCount: number, totalSpectatorCount: number, spectators: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null }> }`
+  - `{ count: number, totalCount: number, readyCount: number, allReady: boolean, phase: "lobby" | "in-game", settings: { requireReady: boolean, allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean, maxPlayers: number | null, maxSpectators: number | null }, players: Array<{ id: string, nickname: string, ready: boolean, connected: boolean, pingMs: number | null, avatar: string }>, spectatorCount: number, totalSpectatorCount: number, spectators: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null }> }`
 - `lobby:config` payload:
-  - `{ settings: { requireReady: boolean, allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean }, phase: "lobby" | "in-game" }`
+  - `{ settings: { requireReady: boolean, allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean, maxPlayers: number | null, maxSpectators: number | null }, phase: "lobby" | "in-game" }`
 - `game:start` payload:
   - `{ startedAt: number, startedBy: string }`
 - `host:error` payload:
@@ -47,3 +49,8 @@ This folder documents client/host/server message formats.
 
 - `GET /host-data` returns:
   - `{ joinUrls: string[], qrDataUrl: string }`
+
+## Lobby environment configuration
+
+- `LOBBY_MAX_PLAYERS` (number): maximum number of player slots (unset = unlimited).
+- `LOBBY_MAX_SPECTATORS` (number): maximum number of spectator slots (unset = unlimited).

@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import os from "node:os";
 import type { IncomingMessage } from "node:http";
 
-const { Room } = colyseus;
+const { Room, ServerError } = colyseus;
 type Client = colyseus.Client;
 
 type ClientMessage = {
@@ -27,6 +27,8 @@ type LobbyConfig = {
   requireReady: boolean;
   allowRejoin: boolean;
   allowMidgameJoin: boolean;
+  maxPlayers: number | null;
+  maxSpectators: number | null;
 };
 
 const MAX_NICKNAME_LENGTH = 20;
@@ -43,7 +45,9 @@ export class LobbyRoom extends Room {
   private config: LobbyConfig = {
     requireReady: false,
     allowRejoin: true,
-    allowMidgameJoin: false
+    allowMidgameJoin: false,
+    maxPlayers: null,
+    maxSpectators: null
   };
 
   onCreate(options?: { config?: Partial<LobbyConfig> }) {
@@ -211,6 +215,7 @@ export class LobbyRoom extends Room {
       return this.isHostRequest(request);
     }
 
+    const role = this.getParticipantRole(options);
     const playerToken = this.getPlayerToken(options);
     const isRejoin = this.config.allowRejoin && playerToken && this.participants.has(playerToken);
 
@@ -220,6 +225,10 @@ export class LobbyRoom extends Room {
 
     if (!this.config.allowMidgameJoin && this.phase === "in-game" && !isRejoin) {
       return false;
+    }
+
+    if (this.isAtCapacity(role) && !isRejoin) {
+      throw new ServerError(403, this.getCapacityError(role));
     }
 
     return true;
@@ -247,6 +256,7 @@ export class LobbyRoom extends Room {
       return;
     }
 
+    const role = this.getParticipantRole(options);
     const playerToken = this.getPlayerToken(options);
     const existingParticipant = playerToken ? this.participants.get(playerToken) : undefined;
 
@@ -283,7 +293,11 @@ export class LobbyRoom extends Room {
       return;
     }
 
-    const role: ParticipantRole = options?.role === "spectator" ? "spectator" : "player";
+    if (this.isAtCapacity(role)) {
+      client.leave(4002, this.getCapacityError(role));
+      return;
+    }
+
     const nickname = this.makeNickname(options?.nickname ?? "", client.sessionId, role);
     const avatar =
       role === "player" ? this.normalizeAvatar(options?.avatar) ?? DEFAULT_AVATAR : undefined;
@@ -397,6 +411,25 @@ export class LobbyRoom extends Room {
     }
 
     return candidate;
+  }
+
+  private getParticipantRole(options?: { role?: string }) {
+    return options?.role === "spectator" ? "spectator" : "player";
+  }
+
+  private isAtCapacity(role: ParticipantRole) {
+    const limit = role === "player" ? this.config.maxPlayers : this.config.maxSpectators;
+    if (limit === null) {
+      return false;
+    }
+    const count = [...this.participants.values()].filter(
+      (participant) => participant.role === role
+    ).length;
+    return count >= limit;
+  }
+
+  private getCapacityError(role: ParticipantRole) {
+    return role === "spectator" ? "LOBBY_FULL_SPECTATOR" : "LOBBY_FULL_PLAYER";
   }
 
   private allReady() {

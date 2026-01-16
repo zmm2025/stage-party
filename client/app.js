@@ -183,7 +183,12 @@ const connect = async () => {
 
     startPingLoop();
   } catch (err) {
-    statusEl.textContent = "Connection failed. Is the host running?";
+    const message = typeof err?.message === "string" ? err.message : "";
+    if (message.includes("LOBBY_FULL")) {
+      statusEl.textContent = "Lobby full.";
+    } else {
+      statusEl.textContent = "Connection failed. Is the host running?";
+    }
     joinButton.disabled = false;
     console.error(err);
   }

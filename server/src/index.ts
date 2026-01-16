@@ -24,10 +24,23 @@ const parseEnvBool = (value: string | undefined, fallback: boolean) => {
   return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
 };
 
+const parseEnvNumber = (value: string | undefined) => {
+  if (value === undefined) {
+    return null;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+  return Math.floor(parsed);
+};
+
 const lobbyConfig = {
   requireReady: parseEnvBool(process.env.LOBBY_REQUIRE_READY, false),
   allowRejoin: parseEnvBool(process.env.LOBBY_ALLOW_REJOIN, true),
-  allowMidgameJoin: parseEnvBool(process.env.LOBBY_ALLOW_MIDGAME_JOIN, false)
+  allowMidgameJoin: parseEnvBool(process.env.LOBBY_ALLOW_MIDGAME_JOIN, false),
+  maxPlayers: parseEnvNumber(process.env.LOBBY_MAX_PLAYERS),
+  maxSpectators: parseEnvNumber(process.env.LOBBY_MAX_SPECTATORS)
 };
 
 const getLanAddresses = () => {
