@@ -13,6 +13,8 @@ This folder documents client/host/server message formats.
   - `{ nickname?: string }`
 - `client:ready` payload:
   - `{ ready?: boolean }`
+- `client:avatar` payload:
+  - `{ avatar?: string }`
 - `host:lock` payload:
   - `{ locked: boolean }`
 - `host:kick` payload:
@@ -24,11 +26,11 @@ This folder documents client/host/server message formats.
 - `server:event` payload:
   - `{ from: string, receivedAt: number, message: { type: string, payload?: unknown } }`
   - `message.type = "welcome"` payload:
-    - `{ sessionId: string, nickname: string, token: string, role: "player" | "spectator", rejoined?: boolean, ready?: boolean }`
+    - `{ sessionId: string, nickname: string, token: string, role: "player" | "spectator", avatar?: string, rejoined?: boolean, ready?: boolean }`
 - `server:pong` payload:
   - `{ sentAt: number, receivedAt: number, pingMs: number | null }`
 - `lobby:state` payload:
-  - `{ count: number, totalCount: number, readyCount: number, allReady: boolean, phase: "lobby" | "in-game", settings: { requireReady: boolean, allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean }, players: Array<{ id: string, nickname: string, ready: boolean, connected: boolean, pingMs: number | null }>, spectatorCount: number, totalSpectatorCount: number, spectators: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null }> }`
+  - `{ count: number, totalCount: number, readyCount: number, allReady: boolean, phase: "lobby" | "in-game", settings: { requireReady: boolean, allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean }, players: Array<{ id: string, nickname: string, ready: boolean, connected: boolean, pingMs: number | null, avatar: string }>, spectatorCount: number, totalSpectatorCount: number, spectators: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null }> }`
 - `lobby:config` payload:
   - `{ settings: { requireReady: boolean, allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean }, phase: "lobby" | "in-game" }`
 - `game:start` payload:
