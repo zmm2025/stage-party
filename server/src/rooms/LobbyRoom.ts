@@ -17,6 +17,7 @@ type ParticipantInfo = {
   token: string;
   connected: boolean;
   role: ParticipantRole;
+  avatar?: string;
   lastPingMs?: number;
 };
 
@@ -27,6 +28,8 @@ type LobbyConfig = {
 };
 
 const MAX_NICKNAME_LENGTH = 20;
+const MAX_AVATAR_LENGTH = 8;
+const DEFAULT_AVATAR = "\u{1F47E}";
 
 export class LobbyRoom extends Room {
   private participants = new Map<string, ParticipantInfo>();
@@ -96,6 +99,34 @@ export class LobbyRoom extends Room {
       }
 
       participant.ready = Boolean(message.ready);
+      this.broadcastState();
+    });
+
+    this.onMessage("client:avatar", (client, message: { avatar?: string }) => {
+      if (this.hostSessions.has(client.sessionId)) {
+        return;
+      }
+
+      if (this.phase !== "lobby") {
+        return;
+      }
+
+      const participantId = this.sessionToParticipant.get(client.sessionId);
+      if (!participantId) {
+        return;
+      }
+
+      const participant = this.participants.get(participantId);
+      if (!participant || participant.role !== "player") {
+        return;
+      }
+
+      const avatar = this.normalizeAvatar(message?.avatar);
+      if (!avatar) {
+        return;
+      }
+
+      participant.avatar = avatar;
       this.broadcastState();
     });
 
@@ -186,7 +217,10 @@ export class LobbyRoom extends Room {
     return true;
   }
 
-  onJoin(client: Client, options?: { nickname?: string; role?: string; playerToken?: string }) {
+  onJoin(
+    client: Client,
+    options?: { nickname?: string; role?: string; playerToken?: string; avatar?: string }
+  ) {
     if (options?.role === "host") {
       this.hostSessions.add(client.sessionId);
       client.send("server:event", {
@@ -210,6 +244,9 @@ export class LobbyRoom extends Room {
 
     if (existingParticipant && this.config.allowRejoin) {
       existingParticipant.connected = true;
+      if (existingParticipant.role === "player" && !existingParticipant.avatar) {
+        existingParticipant.avatar = DEFAULT_AVATAR;
+      }
       this.sessionToParticipant.set(client.sessionId, playerToken);
       client.send("server:event", {
         from: "server",
@@ -222,7 +259,11 @@ export class LobbyRoom extends Room {
             token: existingParticipant.token,
             rejoined: true,
             ready: existingParticipant.ready,
-            role: existingParticipant.role
+            role: existingParticipant.role,
+            avatar:
+              existingParticipant.role === "player"
+                ? existingParticipant.avatar ?? DEFAULT_AVATAR
+                : undefined
           }
         }
       });
@@ -236,13 +277,16 @@ export class LobbyRoom extends Room {
 
     const role: ParticipantRole = options?.role === "spectator" ? "spectator" : "player";
     const nickname = this.makeNickname(options?.nickname ?? "", client.sessionId, role);
+    const avatar =
+      role === "player" ? this.normalizeAvatar(options?.avatar) ?? DEFAULT_AVATAR : undefined;
     const token = playerToken || randomUUID();
     const participant: ParticipantInfo = {
       nickname,
       ready: false,
       token,
       connected: true,
-      role
+      role,
+      avatar
     };
     this.participants.set(token, participant);
     this.sessionToParticipant.set(client.sessionId, token);
@@ -252,7 +296,7 @@ export class LobbyRoom extends Room {
       receivedAt: Date.now(),
       message: {
         type: "welcome",
-        payload: { sessionId: client.sessionId, nickname, token, role }
+        payload: { sessionId: client.sessionId, nickname, token, role, avatar }
       }
     });
     client.send("lobby:config", {
@@ -287,7 +331,8 @@ export class LobbyRoom extends Room {
         nickname: info.nickname,
         ready: info.ready,
         connected: info.connected,
-        pingMs: info.lastPingMs ?? null
+        pingMs: info.lastPingMs ?? null,
+        avatar: info.avatar ?? DEFAULT_AVATAR
       }));
     const spectators = [...this.participants.entries()]
       .filter(([, info]) => info.role === "spectator")
@@ -354,6 +399,14 @@ export class LobbyRoom extends Room {
       return false;
     }
     return connectedPlayers.every((player) => player.ready);
+  }
+
+  private normalizeAvatar(raw?: string) {
+    const trimmed = (raw ?? "").trim();
+    if (!trimmed) {
+      return null;
+    }
+    return trimmed.slice(0, MAX_AVATAR_LENGTH);
   }
 
   private getPlayerToken(options?: { playerToken?: string }) {

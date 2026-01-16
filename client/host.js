@@ -104,6 +104,9 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
 
   listEl.innerHTML = items
     .map((participant) => {
+      const avatar = participant.avatar
+        ? `<span class="avatar" aria-hidden="true">${participant.avatar}</span>`
+        : "";
       const tags = [];
       if (!options.hideReady && participant.ready) {
         tags.push("ready");
@@ -122,7 +125,16 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
         `<span class="bar b3"></span>` +
         `<span class="bar b4"></span>` +
         `</span>`;
-      return `<li class="list-item"><span>${participant.nickname}${suffix}${ping}</span>${wifi}<button class="kick" data-kick-id="${participant.id}">Kick</button></li>`;
+      return (
+        `<li class="list-item">` +
+        `<span class="player-name">` +
+        `${avatar}` +
+        `<span class="nickname">${participant.nickname}${suffix}${ping}</span>` +
+        `</span>` +
+        `${wifi}` +
+        `<button class="kick" data-kick-id="${participant.id}">Kick</button>` +
+        `</li>`
+      );
     })
     .join("");
 

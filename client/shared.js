@@ -34,6 +34,9 @@ window.AppShared = {
     if (playersEl) {
       playersEl.innerHTML = (state.players || [])
         .map((player) => {
+          const avatar = player.avatar
+            ? `<span class="avatar" aria-hidden="true">${player.avatar}</span>`
+            : "";
           const tags = [];
           if (player.ready) {
             tags.push("ready");
@@ -52,7 +55,15 @@ window.AppShared = {
             `<span class="bar b3"></span>` +
             `<span class="bar b4"></span>` +
             `</span>`;
-          return `<li class="list-item"><span>${player.nickname}${suffix}${ping}</span>${wifi}</li>`;
+          return (
+            `<li class="list-item">` +
+            `<span class="player-name">` +
+            `${avatar}` +
+            `<span class="nickname">${player.nickname}${suffix}${ping}</span>` +
+            `</span>` +
+            `${wifi}` +
+            `</li>`
+          );
         })
         .join("");
     }
