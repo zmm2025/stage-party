@@ -18,7 +18,7 @@ const {
   getWsEndpoint,
   renderPlayers,
   pingLevelFromMs,
-  updateWifiBars
+  updateWifiBars: applyWifiBars
 } = window.AppShared;
 
 let room = null;
@@ -188,7 +188,7 @@ const connect = async () => {
       }
       if (pingWifiEl) {
         const level = pingLevelFromMs(payload?.pingMs);
-        updateWifiBars(pingWifiEl, level);
+        applyWifiBars(pingWifiEl, level);
       }
     });
 

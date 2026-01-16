@@ -18,7 +18,7 @@ const {
   getWsEndpoint,
   renderJoinUrls,
   pingLevelFromMs,
-  updateWifiBars
+  updateWifiBars: applyWifiBars
 } = window.AppShared;
 
 const DEFAULT_AVATAR = "\u{1F47E}";
@@ -176,7 +176,7 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
       bar.setAttribute("data-bar", String(index + 1));
       wifi.appendChild(bar);
     });
-    updateWifiBars(wifi, level);
+    applyWifiBars(wifi, level);
 
     const kickButton = document.createElement("button");
     kickButton.className =
