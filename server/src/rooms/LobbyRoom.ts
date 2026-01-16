@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import os from "node:os";
 import type { IncomingMessage } from "node:http";
 
-const { Room } = colyseus;
+const { Room, ServerError } = colyseus;
 type Client = colyseus.Client;
 
 type ClientMessage = {
@@ -215,11 +215,32 @@ export class LobbyRoom extends Room {
     const isRejoin = this.config.allowRejoin && playerToken && this.participants.has(playerToken);
 
     if (this.lobbyLocked && !isRejoin) {
-      return false;
+      throw new ServerError(
+        4001,
+        JSON.stringify({ code: "LOBBY_LOCKED", message: "Lobby is locked." })
+      );
+    }
+
+    if (
+      typeof this.maxClients === "number" &&
+      this.maxClients > 0 &&
+      this.clients.length >= this.maxClients &&
+      !isRejoin
+    ) {
+      throw new ServerError(
+        4002,
+        JSON.stringify({ code: "LOBBY_FULL", message: "Lobby is full." })
+      );
     }
 
     if (!this.config.allowMidgameJoin && this.phase === "in-game" && !isRejoin) {
-      return false;
+      throw new ServerError(
+        4003,
+        JSON.stringify({
+          code: "MIDGAME_JOIN_DISABLED",
+          message: "Joining is disabled once the game starts."
+        })
+      );
     }
 
     return true;
