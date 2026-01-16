@@ -22,6 +22,7 @@ const {
 } = window.AppShared;
 
 const DEFAULT_AVATAR = "\u{1F47E}";
+const QR_FALLBACK_ENDPOINT = "https://api.qrserver.com/v1/create-qr-code/";
 
 let lobbyLocked = false;
 let primaryJoinUrl = "/";
@@ -203,16 +204,37 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
   };
 };
 
+const buildFallbackJoinUrls = () => {
+  const origin = window.location.origin || "";
+  const joinUrl = origin ? `${origin}/` : "/";
+  return [joinUrl];
+};
+
+const applyHostData = (data) => {
+  const joinUrls = data?.joinUrls?.length ? data.joinUrls : buildFallbackJoinUrls();
+  primaryJoinUrl = joinUrls[0] || "/";
+  renderJoinUrls(joinListEl, joinUrls);
+
+  if (qrImg) {
+    if (data?.qrDataUrl) {
+      qrImg.src = data.qrDataUrl;
+    } else {
+      const qrUrl = `${QR_FALLBACK_ENDPOINT}?size=240x240&data=${encodeURIComponent(
+        primaryJoinUrl
+      )}`;
+      qrImg.src = qrUrl;
+    }
+  }
+};
+
 fetch(hostDataEndpoint)
   .then((res) => res.json())
   .then((data) => {
-    qrImg.src = data.qrDataUrl;
-    const joinUrls = data.joinUrls || [];
-    primaryJoinUrl = joinUrls[0] || "/";
-    renderJoinUrls(joinListEl, joinUrls);
+    applyHostData(data);
     connectHost();
   })
   .catch((error) => {
     console.error(error);
     statusEl.textContent = "Failed to load host data.";
+    applyHostData(null);
   });
