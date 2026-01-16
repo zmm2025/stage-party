@@ -121,10 +121,6 @@ export class LobbyRoom extends Room {
         return;
       }
 
-      if (this.phase !== "lobby") {
-        return;
-      }
-
       const participantId = this.sessionToParticipant.get(client.sessionId);
       if (!participantId) {
         return;

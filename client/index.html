@@ -22,16 +22,15 @@
       <div class="mode-row">
         <label class="mode-option">
           <input type="radio" name="join-mode" value="player" checked />
-          Play
+          <span>Play</span>
         </label>
         <label class="mode-option">
           <input type="radio" name="join-mode" value="spectator" />
-          Spectate
+          <span>Spectate</span>
         </label>
       </div>
       <div class="row">
         <button id="join">Join lobby</button>
-        <button id="ping" disabled>Send ping</button>
       </div>
 
       <p class="ping-line">
@@ -47,7 +46,6 @@
       <ul id="players"></ul>
       <p id="phase">Phase: Lobby</p>
       <button id="ready" class="hidden" disabled>Ready up</button>
-      <p id="log"></p>
     </div>
 
     <script src="/vendor/colyseus.js"></script>

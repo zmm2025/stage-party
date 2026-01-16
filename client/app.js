@@ -1,10 +1,9 @@
 const statusEl = document.getElementById("status");
 const joinButton = document.getElementById("join");
-const pingButton = document.getElementById("ping");
-const logEl = document.getElementById("log");
 const nicknameInput = document.getElementById("nickname");
 const avatarSection = document.getElementById("avatar-section");
 const avatarPicker = document.getElementById("avatar-picker");
+const modeRow = document.querySelector(".mode-row");
 const playerCountEl = document.getElementById("player-count");
 const playersEl = document.getElementById("players");
 const readyButton = document.getElementById("ready");
@@ -23,8 +22,10 @@ let pingInterval = null;
 let currentRole = "player";
 let currentPhase = "lobby";
 let currentAvatar = "";
+let nicknameValue = "";
 
 const MAX_AVATAR_LENGTH = 8;
+const DEFAULT_NICKNAME = nicknameInput?.placeholder?.trim() || "John Doe";
 const avatarOptions = [
   "\u{1F47E}",
   "\u{1F916}",
@@ -87,6 +88,11 @@ const buildAvatarPicker = () => {
 
 buildAvatarPicker();
 
+if (nicknameInput && !nicknameInput.value) {
+  nicknameInput.value = DEFAULT_NICKNAME;
+  nicknameValue = DEFAULT_NICKNAME;
+}
+
 const parseJoinError = (err) => {
   const message = err?.message ?? "";
   if (typeof message === "string") {
@@ -139,12 +145,11 @@ const connect = async () => {
       role: role === "spectator" ? "spectator" : "player",
       avatar: role === "player" && avatar ? avatar : undefined
     });
-    statusEl.textContent = `Connected: ${room.sessionId}`;
-    pingButton.disabled = false;
+    statusEl.textContent = "Connected.";
     updateAvatarUi();
+    updateJoinUi();
 
     room.onMessage("server:event", (message) => {
-      logEl.textContent = `Server: ${JSON.stringify(message)}`;
       if (message?.message?.type === "welcome") {
         const token = message.message.payload?.token;
         if (token) {
@@ -158,7 +163,12 @@ const connect = async () => {
           currentAvatar = message.message.payload.avatar;
           setSelectedAvatar(currentAvatar);
         }
+        if (message.message.payload?.nickname && nicknameInput) {
+          nicknameInput.value = message.message.payload.nickname;
+          nicknameValue = message.message.payload.nickname;
+        }
         updateAvatarUi();
+        updateJoinUi();
       }
     });
 
@@ -180,6 +190,8 @@ const connect = async () => {
         pingInterval = null;
       }
       room.leave();
+      room = null;
+      updateJoinUi();
     });
 
     room.onMessage("game:start", () => {
@@ -197,10 +209,6 @@ const connect = async () => {
       updatePhase(state.phase);
       updateReadyUi(state.settings, state);
       updateAvatarUi(state);
-    });
-
-    pingButton.addEventListener("click", () => {
-      sendPing();
     });
 
     readyButton.addEventListener("click", () => {
@@ -229,8 +237,20 @@ joinButton.addEventListener("click", connect);
 
 nicknameInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
-    connect();
+    if (room) {
+      commitNicknameChange();
+    } else {
+      connect();
+    }
   }
+});
+
+nicknameInput.addEventListener("blur", () => {
+  commitNicknameChange();
+});
+
+nicknameInput.addEventListener("change", () => {
+  commitNicknameChange();
 });
 
 modeInputs.forEach((input) => {
@@ -252,6 +272,19 @@ const handleAvatarPickerEvent = (event) => {
     return;
   }
   commitAvatarChange(button.getAttribute("data-avatar"));
+};
+
+const updateJoinUi = () => {
+  const isConnected = Boolean(room);
+  if (joinButton) {
+    joinButton.disabled = isConnected;
+  }
+  if (modeRow) {
+    modeRow.classList.toggle("hidden", isConnected);
+  }
+  modeInputs.forEach((input) => {
+    input.disabled = isConnected;
+  });
 };
 
 if (avatarPicker) {
@@ -338,7 +371,7 @@ const setSelectedAvatar = (avatar) => {
 };
 
 const commitAvatarChange = (value) => {
-  if (currentRole !== "player" || currentPhase !== "lobby") {
+  if (currentRole !== "player") {
     return;
   }
   const avatar = normalizeAvatar(value);
@@ -355,18 +388,32 @@ const commitAvatarChange = (value) => {
   }
 };
 
+const commitNicknameChange = () => {
+  if (!nicknameInput) {
+    return;
+  }
+  const nextNickname = nicknameInput.value.trim() || DEFAULT_NICKNAME;
+  if (nextNickname === nicknameValue) {
+    return;
+  }
+  nicknameInput.value = nextNickname;
+  nicknameValue = nextNickname;
+  if (room) {
+    room.send("client:nickname", { nickname: nextNickname });
+  }
+};
+
 const updateAvatarUi = (state) => {
   if (!avatarSection || !avatarPicker) {
     return;
   }
 
   const isPlayer = currentRole === "player";
-  const isLobby = currentPhase === "lobby";
   avatarSection.classList.toggle("hidden", !isPlayer);
-  avatarPicker.classList.toggle("disabled", !isPlayer || !isLobby);
+  avatarPicker.classList.toggle("disabled", !isPlayer);
   const buttons = getAvatarButtons();
   buttons.forEach((button) => {
-    button.disabled = !isPlayer || !isLobby;
+    button.disabled = !isPlayer;
   });
 
   if (state && isPlayer && playerToken) {
@@ -416,3 +463,4 @@ const startPingLoop = () => {
 };
 
 updateAvatarUi();
+updateJoinUi();
