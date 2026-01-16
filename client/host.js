@@ -12,6 +12,8 @@ const spectatorsEl = document.getElementById("spectators");
 const { roomName, hostDataEndpoint } = window.AppConfig;
 const { ensureColyseus, getWsEndpoint, renderJoinUrls, pingLevelFromMs } = window.AppShared;
 
+const DEFAULT_AVATAR = "\u{1F47E}";
+
 let lobbyLocked = false;
 
 const connectHost = () => {
@@ -50,7 +52,9 @@ const connectHost = () => {
       });
 
       room.onMessage("lobby:state", (state) => {
-        renderHostList(playersEl, playerCountEl, state.players || [], room);
+        renderHostList(playersEl, playerCountEl, state.players || [], room, {
+          defaultAvatar: DEFAULT_AVATAR
+        });
         renderHostList(spectatorsEl, spectatorCountEl, state.spectators || [], room, {
           hideReady: true
         });
@@ -104,8 +108,9 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
 
   listEl.innerHTML = items
     .map((participant) => {
-      const avatar = participant.avatar
-        ? `<span class="avatar" aria-hidden="true">${participant.avatar}</span>`
+      const avatarValue = participant.avatar ?? options.defaultAvatar;
+      const avatar = avatarValue
+        ? `<span class="avatar" aria-hidden="true">${avatarValue}</span>`
         : "";
       const tags = [];
       if (!options.hideReady && participant.ready) {
