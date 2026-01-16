@@ -87,6 +87,37 @@ const buildAvatarPicker = () => {
 
 buildAvatarPicker();
 
+const parseJoinError = (err) => {
+  const message = err?.message ?? "";
+  if (typeof message === "string") {
+    try {
+      const parsed = JSON.parse(message);
+      if (parsed && typeof parsed === "object") {
+        return {
+          code: typeof parsed.code === "string" ? parsed.code : null,
+          message: typeof parsed.message === "string" ? parsed.message : null
+        };
+      }
+    } catch (error) {
+      console.error("Failed to parse join error", error);
+    }
+  }
+  return { code: null, message: null };
+};
+
+const joinErrorMessage = (errorInfo) => {
+  switch (errorInfo?.code) {
+    case "LOBBY_LOCKED":
+      return "Lobby is locked. Ask the host to unlock it.";
+    case "MIDGAME_JOIN_DISABLED":
+      return "The game is already running. Please wait for the next round.";
+    case "LOBBY_FULL":
+      return "Lobby is full. Please try again soon.";
+    default:
+      return null;
+  }
+};
+
 const connect = async () => {
   if (!ensureColyseus(statusEl)) {
     return;
@@ -183,11 +214,19 @@ const connect = async () => {
 
     startPingLoop();
   } catch (err) {
-    const message = typeof err?.message === "string" ? err.message : "";
-    if (message.includes("LOBBY_FULL")) {
+    const errorInfo = parseJoinError(err);
+    const joinMessage = joinErrorMessage(errorInfo);
+    const rawMessage = err?.message ?? errorInfo?.message ?? "";
+    const isLobbyFull =
+      typeof rawMessage === "string" && rawMessage.includes("LOBBY_FULL");
+
+    if (isLobbyFull) {
       statusEl.textContent = "Lobby full.";
     } else {
-      statusEl.textContent = "Connection failed. Is the host running?";
+      statusEl.textContent =
+        joinMessage ||
+        errorInfo?.message ||
+        "Connection failed. Is the host running?";
     }
     joinButton.disabled = false;
     console.error(err);

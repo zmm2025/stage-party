@@ -34,6 +34,7 @@ type LobbyConfig = {
 const MAX_NICKNAME_LENGTH = 20;
 const MAX_AVATAR_LENGTH = 8;
 const DEFAULT_AVATAR = "\u{1F47E}";
+const STATE_BROADCAST_MS = 250;
 
 export class LobbyRoom extends Room {
   private participants = new Map<string, ParticipantInfo>();
@@ -42,6 +43,8 @@ export class LobbyRoom extends Room {
   private phase: "lobby" | "in-game" = "lobby";
   private lobbyLocked = false;
   private hostAddresses = new Set<string>();
+  private stateDirty = false;
+  private stateBroadcastInterval?: NodeJS.Timeout;
   private config: LobbyConfig = {
     requireReady: false,
     allowRejoin: true,
@@ -56,6 +59,13 @@ export class LobbyRoom extends Room {
       ...(options?.config ?? {})
     };
     this.hostAddresses = this.getHostAddresses();
+    this.stateBroadcastInterval = setInterval(() => {
+      if (!this.stateDirty) {
+        return;
+      }
+      this.stateDirty = false;
+      this.broadcastState();
+    }, STATE_BROADCAST_MS);
 
     this.onMessage("client:event", (client, message: ClientMessage) => {
       this.broadcast("server:event", {
@@ -88,7 +98,7 @@ export class LobbyRoom extends Room {
         participantId
       );
       participant.nickname = nickname;
-      this.broadcastState();
+      this.markStateDirty();
     });
 
     this.onMessage("client:ready", (client, message: { ready?: boolean }) => {
@@ -107,7 +117,7 @@ export class LobbyRoom extends Room {
       }
 
       participant.ready = Boolean(message.ready);
-      this.broadcastState();
+      this.markStateDirty();
     });
 
     this.onMessage("client:avatar", (client, message: { avatar?: string }) => {
@@ -135,7 +145,7 @@ export class LobbyRoom extends Room {
       }
 
       participant.avatar = avatar;
-      this.broadcastState();
+      this.markStateDirty();
     });
 
     this.onMessage("client:ping", (client, message: { sentAt?: number }) => {
@@ -152,6 +162,7 @@ export class LobbyRoom extends Room {
       const sentAt = typeof message.sentAt === "number" ? message.sentAt : null;
       if (sentAt) {
         participant.lastPingMs = Math.max(0, Date.now() - sentAt);
+        this.markStateDirty();
       }
 
       client.send("server:pong", {
@@ -159,7 +170,6 @@ export class LobbyRoom extends Room {
         receivedAt: Date.now(),
         pingMs: participant.lastPingMs ?? null
       });
-      this.broadcastState();
     });
 
     this.onMessage("host:start", (client) => {
@@ -181,7 +191,7 @@ export class LobbyRoom extends Room {
         startedAt: Date.now(),
         startedBy: client.sessionId
       });
-      this.broadcastState();
+      this.markStateDirty();
     });
 
     this.onMessage("host:lock", (client, message: { locked?: boolean }) => {
@@ -190,7 +200,7 @@ export class LobbyRoom extends Room {
       }
 
       this.lobbyLocked = Boolean(message.locked);
-      this.broadcastState();
+      this.markStateDirty();
     });
 
     this.onMessage("host:kick", (client, message: { targetId?: string }) => {
@@ -220,11 +230,32 @@ export class LobbyRoom extends Room {
     const isRejoin = this.config.allowRejoin && playerToken && this.participants.has(playerToken);
 
     if (this.lobbyLocked && !isRejoin) {
-      return false;
+      throw new ServerError(
+        4001,
+        JSON.stringify({ code: "LOBBY_LOCKED", message: "Lobby is locked." })
+      );
+    }
+
+    if (
+      typeof this.maxClients === "number" &&
+      this.maxClients > 0 &&
+      this.clients.length >= this.maxClients &&
+      !isRejoin
+    ) {
+      throw new ServerError(
+        4002,
+        JSON.stringify({ code: "LOBBY_FULL", message: "Lobby is full." })
+      );
     }
 
     if (!this.config.allowMidgameJoin && this.phase === "in-game" && !isRejoin) {
-      return false;
+      throw new ServerError(
+        4003,
+        JSON.stringify({
+          code: "MIDGAME_JOIN_DISABLED",
+          message: "Joining is disabled once the game starts."
+        })
+      );
     }
 
     if (this.isAtCapacity(role) && !isRejoin) {
@@ -252,7 +283,7 @@ export class LobbyRoom extends Room {
         settings: { ...this.config, lobbyLocked: this.lobbyLocked },
         phase: this.phase
       });
-      this.broadcastState();
+      this.markStateDirty();
       return;
     }
 
@@ -289,7 +320,7 @@ export class LobbyRoom extends Room {
         settings: { ...this.config, lobbyLocked: this.lobbyLocked },
         phase: this.phase
       });
-      this.broadcastState();
+      this.markStateDirty();
       return;
     }
 
@@ -326,7 +357,7 @@ export class LobbyRoom extends Room {
       phase: this.phase
     });
 
-    this.broadcastState();
+    this.markStateDirty();
   }
 
   onLeave(client: Client) {
@@ -342,7 +373,14 @@ export class LobbyRoom extends Room {
     }
 
     this.hostSessions.delete(client.sessionId);
-    this.broadcastState();
+    this.markStateDirty();
+  }
+
+  onDispose() {
+    if (this.stateBroadcastInterval) {
+      clearInterval(this.stateBroadcastInterval);
+      this.stateBroadcastInterval = undefined;
+    }
   }
 
   private broadcastState() {
@@ -380,6 +418,10 @@ export class LobbyRoom extends Room {
       phase: this.phase,
       settings: { ...this.config, lobbyLocked: this.lobbyLocked }
     });
+  }
+
+  private markStateDirty() {
+    this.stateDirty = true;
   }
 
   private makeNickname(
@@ -481,7 +523,7 @@ export class LobbyRoom extends Room {
     }
 
     this.participants.delete(token);
-    this.broadcastState();
+    this.markStateDirty();
   }
 
   private isHostRequest(request?: IncomingMessage) {
