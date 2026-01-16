@@ -1,7 +1,6 @@
 const statusEl = document.getElementById("status");
 const playerCountEl = document.getElementById("player-count");
 const playersEl = document.getElementById("players");
-const joinListEl = document.getElementById("join-urls");
 const qrImg = document.getElementById("qr");
 const startButton = document.getElementById("start-game");
 const phaseEl = document.getElementById("phase");
@@ -16,7 +15,6 @@ const { roomName, hostDataEndpoint } = window.AppConfig;
 const {
   ensureColyseus,
   getWsEndpoint,
-  renderJoinUrls,
   pingLevelFromMs,
   updateWifiBars: applyWifiBars
 } = window.AppShared;
@@ -213,8 +211,6 @@ const buildFallbackJoinUrls = () => {
 const applyHostData = (data) => {
   const joinUrls = data?.joinUrls?.length ? data.joinUrls : buildFallbackJoinUrls();
   primaryJoinUrl = joinUrls[0] || "/";
-  renderJoinUrls(joinListEl, joinUrls);
-
   if (qrImg) {
     if (data?.qrDataUrl) {
       qrImg.src = data.qrDataUrl;
