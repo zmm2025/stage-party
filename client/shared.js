@@ -1,3 +1,19 @@
+const WIFI_ACTIVE_CLASS = "bg-amber-400";
+const WIFI_INACTIVE_CLASS = "bg-slate-700";
+
+const updateWifiBars = (wifiEl, level) => {
+  if (!wifiEl) {
+    return;
+  }
+  wifiEl.dataset.level = String(level);
+  const bars = wifiEl.querySelectorAll("[data-bar]");
+  bars.forEach((bar) => {
+    const barLevel = Number(bar.getAttribute("data-bar")) || 0;
+    bar.classList.toggle(WIFI_ACTIVE_CLASS, barLevel <= level && level > 0);
+    bar.classList.toggle(WIFI_INACTIVE_CLASS, barLevel > level || level === 0);
+  });
+};
+
 window.AppShared = {
   pingLevelFromMs(pingMs) {
     if (typeof pingMs !== "number") {
@@ -38,14 +54,16 @@ window.AppShared = {
     const fragment = document.createDocumentFragment();
     (state.players || []).forEach((player) => {
       const listItem = document.createElement("li");
-      listItem.classList.add("list-item");
+      listItem.className =
+        "flex items-center justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 px-3 py-2";
 
       const playerName = document.createElement("span");
-      playerName.classList.add("player-name");
+      playerName.className = "flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-100";
 
       if (player.avatar) {
         const avatar = document.createElement("span");
-        avatar.classList.add("avatar");
+        avatar.className =
+          "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-base";
         avatar.setAttribute("aria-hidden", "true");
         avatar.textContent = player.avatar;
         playerName.appendChild(avatar);
@@ -63,21 +81,22 @@ window.AppShared = {
         typeof player.pingMs === "number" ? ` - ${Math.round(player.pingMs)}ms` : "";
 
       const nickname = document.createElement("span");
-      nickname.classList.add("nickname");
+      nickname.className = "text-sm text-slate-100";
       nickname.textContent = `${player.nickname}${suffix}${ping}`;
       playerName.appendChild(nickname);
 
       const level = window.AppShared.pingLevelFromMs(player.pingMs);
       const wifi = document.createElement("span");
-      wifi.classList.add("wifi");
-      wifi.setAttribute("data-level", level);
+      wifi.className = "flex items-end gap-1";
       wifi.setAttribute("aria-label", "Connection strength");
 
-      ["b1", "b2", "b3", "b4"].forEach((barClass) => {
+      [2, 3, 4, 5].forEach((height, index) => {
         const bar = document.createElement("span");
-        bar.classList.add("bar", barClass);
+        bar.className = `h-${height} w-1 rounded-sm ${WIFI_INACTIVE_CLASS}`;
+        bar.setAttribute("data-bar", String(index + 1));
         wifi.appendChild(bar);
       });
+      updateWifiBars(wifi, level);
 
       listItem.appendChild(playerName);
       listItem.appendChild(wifi);
@@ -88,7 +107,13 @@ window.AppShared = {
   },
   renderJoinUrls(joinListEl, urls) {
     if (joinListEl) {
-      joinListEl.innerHTML = urls.map((url) => `<li><code>${url}</code></li>`).join("");
+      joinListEl.innerHTML = urls
+        .map(
+          (url) =>
+            `<li><code class="block rounded-xl border border-slate-700 bg-slate-950/80 px-3 py-2 text-xs text-slate-200">${url}</code></li>`
+        )
+        .join("");
     }
-  }
+  },
+  updateWifiBars
 };

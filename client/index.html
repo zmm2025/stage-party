@@ -4,51 +4,123 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LAN Party Kit - Client</title>
-    <link rel="stylesheet" href="/styles.css" />
-    <script src="/config.js"></script>
-    <script src="/shared.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Space Grotesk"', "system-ui", "sans-serif"]
+            }
+          }
+        }
+      };
+    </script>
+    <script src="./config.js"></script>
+    <script src="./shared.js"></script>
   </head>
-  <body>
-    <div class="card compact">
-      <h1>LAN Party Kit</h1>
-      <p id="status">Choose a nickname to join.</p>
+  <body class="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <main class="mx-auto flex min-h-screen w-full max-w-lg flex-col justify-center px-4 py-8">
+      <div class="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-2xl shadow-black/30">
+        <div class="space-y-1">
+          <p class="text-xs uppercase tracking-[0.2em] text-amber-300/80">LAN Party Kit</p>
+          <h1 class="text-2xl font-semibold text-white">Join the lobby</h1>
+          <p id="status" class="text-sm text-slate-300">Choose a nickname to join.</p>
+        </div>
 
-      <label for="nickname">Nickname</label>
-      <input id="nickname" maxlength="20" placeholder="John Doe" />
-      <div id="avatar-section">
-        <label>Avatar</label>
-        <div id="avatar-picker" class="avatar-picker" aria-label="Avatar selection"></div>
-      </div>
-      <div class="mode-row">
-        <label class="mode-option">
-          <input type="radio" name="join-mode" value="player" checked />
-          <span>Play</span>
-        </label>
-        <label class="mode-option">
-          <input type="radio" name="join-mode" value="spectator" />
-          <span>Spectate</span>
-        </label>
-      </div>
-      <div class="row">
-        <button id="join">Join lobby</button>
-      </div>
+        <div class="mt-6 space-y-4">
+          <div>
+            <label for="nickname" class="text-sm font-semibold text-slate-200">Nickname</label>
+            <input
+              id="nickname"
+              maxlength="20"
+              placeholder="John Doe"
+              class="mt-2 w-full rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-base text-slate-100 shadow-inner focus:border-amber-400/60 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+            />
+          </div>
+          <div id="avatar-section" class="space-y-2">
+            <label class="text-sm font-semibold text-slate-200">Avatar</label>
+            <div
+              id="avatar-picker"
+              class="avatar-picker grid grid-cols-6 gap-2 sm:grid-cols-8"
+              aria-label="Avatar selection"
+            ></div>
+          </div>
+          <div class="mode-row flex flex-wrap gap-3">
+            <label class="flex-1">
+              <input type="radio" name="join-mode" value="player" class="peer sr-only" checked />
+              <span
+                class="flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 transition peer-checked:border-amber-400 peer-checked:bg-amber-400 peer-checked:text-slate-900"
+              >
+                Play
+              </span>
+            </label>
+            <label class="flex-1">
+              <input type="radio" name="join-mode" value="spectator" class="peer sr-only" />
+              <span
+                class="flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 transition peer-checked:border-amber-400 peer-checked:bg-amber-400 peer-checked:text-slate-900"
+              >
+                Spectate
+              </span>
+            </label>
+          </div>
+          <button
+            id="join"
+            class="w-full rounded-2xl bg-amber-400 px-4 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Join lobby
+          </button>
+        </div>
 
-      <p class="ping-line">
-        <strong>Ping:</strong> <span id="ping-value">--</span>
-        <span class="wifi" id="ping-wifi" aria-label="Connection strength">
-          <span class="bar b1"></span>
-          <span class="bar b2"></span>
-          <span class="bar b3"></span>
-          <span class="bar b4"></span>
-        </span>
-      </p>
-      <p><strong>Players (<span id="player-count">0</span>)</strong></p>
-      <ul id="players"></ul>
-      <p id="phase">Phase: Lobby</p>
-      <button id="ready" class="hidden" disabled>Ready up</button>
-    </div>
+        <div class="mt-6 space-y-3 rounded-2xl border border-slate-800/80 bg-slate-950/60 p-4">
+          <div class="flex items-center justify-between text-sm text-slate-200">
+            <span class="font-semibold">Ping</span>
+            <span class="flex items-center gap-2">
+              <span id="ping-value" class="font-medium text-slate-100">--</span>
+              <span
+                id="ping-wifi"
+                class="flex items-end gap-1"
+                aria-label="Connection strength"
+              >
+                <span class="h-2 w-1 rounded-sm bg-slate-700" data-bar="1"></span>
+                <span class="h-3 w-1 rounded-sm bg-slate-700" data-bar="2"></span>
+                <span class="h-4 w-1 rounded-sm bg-slate-700" data-bar="3"></span>
+                <span class="h-5 w-1 rounded-sm bg-slate-700" data-bar="4"></span>
+              </span>
+            </span>
+          </div>
+          <div class="space-y-2">
+            <p class="text-sm font-semibold text-slate-200">
+              Players (<span id="player-count">0</span>)
+            </p>
+            <ul id="players" class="space-y-2"></ul>
+          </div>
+          <p id="phase" class="text-xs uppercase tracking-[0.2em] text-slate-400">
+            Phase: Lobby
+          </p>
+          <button
+            id="ready"
+            class="hidden w-full rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-sm font-semibold text-slate-100 transition hover:border-amber-400/60 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+            disabled
+          >
+            Ready up
+          </button>
+        </div>
+      </div>
+    </main>
 
     <script src="/vendor/colyseus.js"></script>
-    <script src="/app.js"></script>
+    <script>
+      if (typeof Colyseus === "undefined") {
+        const fallback = document.createElement("script");
+        fallback.src = "https://unpkg.com/colyseus.js@0.16.22/dist/colyseus.js";
+        document.head.appendChild(fallback);
+      }
+    </script>
+    <script src="./app.js"></script>
   </body>
 </html>

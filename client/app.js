@@ -13,7 +13,13 @@ const pingWifiEl = document.getElementById("ping-wifi");
 const modeInputs = document.querySelectorAll('input[name="join-mode"]');
 
 const { roomName } = window.AppConfig;
-const { ensureColyseus, getWsEndpoint, renderPlayers, pingLevelFromMs } = window.AppShared;
+const {
+  ensureColyseus,
+  getWsEndpoint,
+  renderPlayers,
+  pingLevelFromMs,
+  updateWifiBars
+} = window.AppShared;
 
 let room = null;
 let playerToken = localStorage.getItem("lpk_player_token");
@@ -26,6 +32,9 @@ let nicknameValue = "";
 
 const MAX_AVATAR_LENGTH = 8;
 const DEFAULT_NICKNAME = nicknameInput?.placeholder?.trim() || "John Doe";
+const avatarButtonBaseClasses =
+  "flex h-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-950/80 text-lg text-slate-100 shadow-sm transition focus:outline-none focus:ring-2 focus:ring-amber-400/40";
+const avatarButtonSelectedClasses = "border-amber-400 bg-amber-400 text-slate-900";
 const avatarOptions = [
   "\u{1F47E}",
   "\u{1F916}",
@@ -78,7 +87,7 @@ const buildAvatarPicker = () => {
   avatarOptions.forEach((avatar) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "avatar-choice";
+    button.className = avatarButtonBaseClasses;
     button.setAttribute("data-avatar", avatar);
     button.setAttribute("aria-pressed", "false");
     button.textContent = avatar;
@@ -179,7 +188,7 @@ const connect = async () => {
       }
       if (pingWifiEl) {
         const level = pingLevelFromMs(payload?.pingMs);
-        pingWifiEl.dataset.level = String(level);
+        updateWifiBars(pingWifiEl, level);
       }
     });
 
@@ -359,7 +368,7 @@ const getAvatarButtons = () => {
 
 const getSelectedAvatar = () => {
   for (const button of getAvatarButtons()) {
-    if (button.classList.contains("selected")) {
+    if (button.getAttribute("aria-pressed") === "true") {
       return button.getAttribute("data-avatar") || "";
     }
   }
@@ -373,7 +382,12 @@ const setSelectedAvatar = (avatar) => {
   }
   buttons.forEach((button) => {
     const matches = button.getAttribute("data-avatar") === avatar;
-    button.classList.toggle("selected", matches);
+    button.classList.toggle("border-amber-400", matches);
+    button.classList.toggle("bg-amber-400", matches);
+    button.classList.toggle("text-slate-900", matches);
+    button.classList.toggle("border-slate-700", !matches);
+    button.classList.toggle("bg-slate-950/80", !matches);
+    button.classList.toggle("text-slate-100", !matches);
     button.setAttribute("aria-pressed", matches ? "true" : "false");
   });
 };
@@ -418,7 +432,8 @@ const updateAvatarUi = (state) => {
 
   const isPlayer = currentRole === "player";
   avatarSection.classList.toggle("hidden", !isPlayer);
-  avatarPicker.classList.toggle("disabled", !isPlayer);
+  avatarPicker.classList.toggle("opacity-50", !isPlayer);
+  avatarPicker.classList.toggle("pointer-events-none", !isPlayer);
   const buttons = getAvatarButtons();
   buttons.forEach((button) => {
     button.disabled = !isPlayer;

@@ -4,40 +4,120 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>LAN Party Kit - Host</title>
-    <link rel="stylesheet" href="/styles.css" />
-    <script src="/config.js"></script>
-    <script src="/shared.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Space Grotesk"', "system-ui", "sans-serif"]
+            }
+          }
+        }
+      };
+    </script>
+    <script src="./config.js"></script>
+    <script src="./shared.js"></script>
   </head>
-  <body class="host">
-    <div class="card" id="host-card">
-      <h1>Join the game</h1>
-      <p>Scan to join on your phone:</p>
-      <img id="qr" alt="Join QR code" />
-      <p>or go to</p>
-      <ul id="join-urls"></ul>
-      <p id="status">Lobby offline.</p>
-      <p id="phase">Phase: Lobby</p>
-      <button id="lock-lobby" class="secondary" disabled>Lock Lobby</button>
-      <button id="start-game" disabled>Start Game</button>
-      <div class="host-columns">
-        <section>
-          <p><strong>Players (<span id="player-count">0</span>)</strong></p>
-          <ul id="players"></ul>
-        </section>
-        <section>
-          <p><strong>Spectators (<span id="spectator-count">0</span>)</strong></p>
-          <ul id="spectators"></ul>
-        </section>
+  <body class="min-h-screen bg-slate-950 text-slate-100 font-sans">
+    <main class="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-4 py-8">
+      <div
+        class="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 shadow-2xl shadow-black/30"
+        id="host-card"
+      >
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div class="flex-1 space-y-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.2em] text-amber-300/80">Host console</p>
+              <h1 class="text-2xl font-semibold text-white">Join the game</h1>
+              <p class="text-sm text-slate-300">Scan to join on your phone.</p>
+            </div>
+            <div class="flex flex-col gap-4 rounded-2xl border border-slate-800/70 bg-slate-950/70 p-4">
+              <div class="flex flex-wrap items-center gap-4">
+                <img
+                  id="qr"
+                  alt="Join QR code"
+                  class="h-44 w-44 rounded-2xl border border-slate-800 bg-white p-2 shadow-lg"
+                />
+                <div class="space-y-2 text-sm text-slate-200">
+                  <p class="font-semibold uppercase tracking-[0.2em] text-slate-400">Join URLs</p>
+                  <ul id="join-urls" class="space-y-2"></ul>
+                </div>
+              </div>
+              <div class="flex flex-wrap items-center gap-3 text-sm">
+                <span id="status" class="rounded-full border border-slate-700 px-3 py-1 text-slate-200">
+                  Lobby offline.
+                </span>
+                <span id="phase" class="text-xs uppercase tracking-[0.2em] text-slate-400">
+                  Phase: Lobby
+                </span>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button
+                id="lock-lobby"
+                class="rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-amber-400/60 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled
+              >
+                Lock Lobby
+              </button>
+              <button
+                id="start-game"
+                class="rounded-2xl bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled
+              >
+                Start Game
+              </button>
+            </div>
+          </div>
+          <div class="flex-1 space-y-4">
+            <div class="rounded-2xl border border-slate-800/70 bg-slate-950/70 p-4">
+              <p class="text-sm font-semibold text-slate-200">
+                Players (<span id="player-count">0</span>)
+              </p>
+              <ul id="players" class="mt-3 space-y-2"></ul>
+            </div>
+            <div class="rounded-2xl border border-slate-800/70 bg-slate-950/70 p-4">
+              <p class="text-sm font-semibold text-slate-200">
+                Spectators (<span id="spectator-count">0</span>)
+              </p>
+              <ul id="spectators" class="mt-3 space-y-2"></ul>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="card hidden" id="host-blocked">
-      <h1>Host unavailable</h1>
-      <p>Only the device running the server can host the lobby.</p>
-      <p>Open the host page on the server machine, or join as a player instead.</p>
-      <button id="go-player">Go to Player Page</button>
-    </div>
+      <div
+        class="hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6 text-center shadow-2xl shadow-black/30"
+        id="host-blocked"
+      >
+        <h1 class="text-2xl font-semibold text-white">Host unavailable</h1>
+        <p class="mt-2 text-sm text-slate-300">
+          Only the device running the server can host the lobby.
+        </p>
+        <p class="mt-1 text-sm text-slate-400">
+          Open the host page on the server machine, or join as a player instead.
+        </p>
+        <button
+          id="go-player"
+          class="mt-4 rounded-2xl bg-amber-400 px-4 py-2 text-sm font-semibold text-slate-900 shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-300"
+        >
+          Go to Player Page
+        </button>
+      </div>
+    </main>
 
     <script src="/vendor/colyseus.js"></script>
-    <script src="/host.js"></script>
+    <script>
+      if (typeof Colyseus === "undefined") {
+        const fallback = document.createElement("script");
+        fallback.src = "https://unpkg.com/colyseus.js@0.16.22/dist/colyseus.js";
+        document.head.appendChild(fallback);
+      }
+    </script>
+    <script src="./host.js"></script>
   </body>
 </html>

@@ -13,7 +13,13 @@ const hostBlockedCard = document.getElementById("host-blocked");
 const goPlayerButton = document.getElementById("go-player");
 
 const { roomName, hostDataEndpoint } = window.AppConfig;
-const { ensureColyseus, getWsEndpoint, renderJoinUrls, pingLevelFromMs } = window.AppShared;
+const {
+  ensureColyseus,
+  getWsEndpoint,
+  renderJoinUrls,
+  pingLevelFromMs,
+  updateWifiBars
+} = window.AppShared;
 
 const DEFAULT_AVATAR = "\u{1F47E}";
 
@@ -126,15 +132,17 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
   const fragment = document.createDocumentFragment();
   items.forEach((participant) => {
     const listItem = document.createElement("li");
-    listItem.classList.add("list-item");
+    listItem.className =
+      "flex items-center justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 px-3 py-2";
 
     const playerName = document.createElement("span");
-    playerName.classList.add("player-name");
+    playerName.className = "flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-100";
 
     const avatarValue = participant.avatar ?? options.defaultAvatar;
     if (avatarValue) {
       const avatar = document.createElement("span");
-      avatar.classList.add("avatar");
+      avatar.className =
+        "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-base";
       avatar.setAttribute("aria-hidden", "true");
       avatar.textContent = avatarValue;
       playerName.appendChild(avatar);
@@ -152,24 +160,26 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
       typeof participant.pingMs === "number" ? ` - ${Math.round(participant.pingMs)}ms` : "";
 
     const nickname = document.createElement("span");
-    nickname.classList.add("nickname");
+    nickname.className = "text-sm text-slate-100";
     nickname.textContent = `${participant.nickname}${suffix}${ping}`;
     playerName.appendChild(nickname);
 
     const level = pingLevelFromMs(participant.pingMs);
     const wifi = document.createElement("span");
-    wifi.classList.add("wifi");
-    wifi.setAttribute("data-level", level);
+    wifi.className = "flex items-end gap-1";
     wifi.setAttribute("aria-label", "Connection strength");
 
-    ["b1", "b2", "b3", "b4"].forEach((barClass) => {
+    [2, 3, 4, 5].forEach((height, index) => {
       const bar = document.createElement("span");
-      bar.classList.add("bar", barClass);
+      bar.className = `h-${height} w-1 rounded-sm bg-slate-700`;
+      bar.setAttribute("data-bar", String(index + 1));
       wifi.appendChild(bar);
     });
+    updateWifiBars(wifi, level);
 
     const kickButton = document.createElement("button");
-    kickButton.classList.add("kick");
+    kickButton.className =
+      "rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20";
     kickButton.setAttribute("data-kick-id", participant.id);
     kickButton.textContent = "Kick";
 
