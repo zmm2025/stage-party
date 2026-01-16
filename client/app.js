@@ -97,11 +97,6 @@ const buildAvatarPicker = () => {
 
 buildAvatarPicker();
 
-if (nicknameInput && !nicknameInput.value) {
-  nicknameInput.value = DEFAULT_NICKNAME;
-  nicknameValue = DEFAULT_NICKNAME;
-}
-
 const parseJoinError = (err) => {
   const message = err?.message ?? "";
   if (typeof message === "string") {
@@ -143,7 +138,11 @@ const connect = async () => {
 
   try {
     const client = new Colyseus.Client(getWsEndpoint());
-    const nickname = nicknameInput.value.trim();
+    const nickname = nicknameInput.value.trim() || DEFAULT_NICKNAME;
+    if (nicknameInput && !nicknameInput.value.trim()) {
+      nicknameInput.value = nickname;
+      nicknameValue = nickname;
+    }
     const role = getSelectedRole();
     currentRole = role;
     const avatar = normalizeAvatar(getSelectedAvatar());

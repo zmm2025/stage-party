@@ -155,15 +155,14 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
       tags.push("away");
     }
     const suffix = tags.length ? ` (${tags.join(", ")})` : "";
-    const ping =
-      typeof participant.pingMs === "number" ? ` - ${Math.round(participant.pingMs)}ms` : "";
-
     const nickname = document.createElement("span");
     nickname.className = "text-sm text-slate-100";
-    nickname.textContent = `${participant.nickname}${suffix}${ping}`;
+    nickname.textContent = `${participant.nickname}${suffix}`;
     playerName.appendChild(nickname);
 
     const level = pingLevelFromMs(participant.pingMs);
+    const pingWrap = document.createElement("span");
+    pingWrap.className = "flex items-center gap-2 text-xs text-slate-200";
     const wifi = document.createElement("span");
     wifi.className = "flex items-end gap-1";
     wifi.setAttribute("aria-label", "Connection strength");
@@ -176,14 +175,22 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
     });
     applyWifiBars(wifi, level);
 
+    const pingLabel = document.createElement("span");
+    pingLabel.textContent =
+      typeof participant.pingMs === "number" ? `${Math.round(participant.pingMs)}ms` : "--";
+    pingWrap.appendChild(wifi);
+    pingWrap.appendChild(pingLabel);
+
     const kickButton = document.createElement("button");
     kickButton.className =
-      "rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-200 transition hover:border-rose-300 hover:bg-rose-500/20";
+      "inline-flex h-7 w-7 items-center justify-center rounded-full border border-rose-500/40 text-xs font-semibold text-rose-300 transition hover:border-rose-400 hover:bg-rose-500/20";
     kickButton.setAttribute("data-kick-id", participant.id);
-    kickButton.textContent = "Kick";
+    kickButton.setAttribute("aria-label", "Kick");
+    kickButton.setAttribute("title", "Kick");
+    kickButton.textContent = "\u00D7";
 
     listItem.appendChild(playerName);
-    listItem.appendChild(wifi);
+    listItem.appendChild(pingWrap);
     listItem.appendChild(kickButton);
     fragment.appendChild(listItem);
   });
