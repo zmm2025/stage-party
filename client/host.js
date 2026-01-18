@@ -1,10 +1,8 @@
 const statusEl = document.getElementById("status");
 const playerCountEl = document.getElementById("player-count");
 const playersEl = document.getElementById("players");
-const joinListEl = document.getElementById("join-urls");
 const qrImg = document.getElementById("qr");
 const startButton = document.getElementById("start-game");
-const phaseEl = document.getElementById("phase");
 const lockButton = document.getElementById("lock-lobby");
 const spectatorCountEl = document.getElementById("spectator-count");
 const spectatorsEl = document.getElementById("spectators");
@@ -13,9 +11,15 @@ const hostBlockedCard = document.getElementById("host-blocked");
 const goPlayerButton = document.getElementById("go-player");
 
 const { roomName, hostDataEndpoint } = window.AppConfig;
-const { ensureColyseus, getWsEndpoint, renderJoinUrls, pingLevelFromMs } = window.AppShared;
+const {
+  ensureColyseus,
+  getWsEndpoint,
+  pingLevelFromMs,
+  updateWifiBars: applyWifiBars
+} = window.AppShared;
 
 const DEFAULT_AVATAR = "\u{1F47E}";
+const QR_FALLBACK_ENDPOINT = "https://api.qrserver.com/v1/create-qr-code/";
 
 let lobbyLocked = false;
 let primaryJoinUrl = "/";
@@ -62,7 +66,6 @@ const connectHost = () => {
       });
 
       room.onMessage("lobby:config", (config) => {
-        updatePhase(config?.phase);
         updateStartButton(config?.settings, { count: 0, allReady: false, phase: config?.phase });
         lobbyLocked = Boolean(config?.settings?.lobbyLocked);
         updateLockButton();
@@ -75,7 +78,6 @@ const connectHost = () => {
         renderHostList(spectatorsEl, spectatorCountEl, state.spectators || [], room, {
           hideReady: true
         });
-        updatePhase(state.phase);
         updateStartButton(state.settings, state);
         lobbyLocked = Boolean(state?.settings?.lobbyLocked);
         updateLockButton();
@@ -85,12 +87,6 @@ const connectHost = () => {
       console.error(error);
       showHostBlocked();
     });
-};
-
-const updatePhase = (phase) => {
-  if (phaseEl) {
-    phaseEl.textContent = `Phase: ${phase === "in-game" ? "In Game" : "Lobby"}`;
-  }
 };
 
 const updateStartButton = (settings, state) => {
@@ -126,15 +122,17 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
   const fragment = document.createDocumentFragment();
   items.forEach((participant) => {
     const listItem = document.createElement("li");
-    listItem.classList.add("list-item");
+    listItem.className =
+      "flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 px-3 py-2";
 
     const playerName = document.createElement("span");
-    playerName.classList.add("player-name");
+    playerName.className = "flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-100";
 
     const avatarValue = participant.avatar ?? options.defaultAvatar;
     if (avatarValue) {
       const avatar = document.createElement("span");
-      avatar.classList.add("avatar");
+      avatar.className =
+        "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-base";
       avatar.setAttribute("aria-hidden", "true");
       avatar.textContent = avatarValue;
       playerName.appendChild(avatar);
@@ -148,33 +146,42 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
       tags.push("away");
     }
     const suffix = tags.length ? ` (${tags.join(", ")})` : "";
-    const ping =
-      typeof participant.pingMs === "number" ? ` - ${Math.round(participant.pingMs)}ms` : "";
-
     const nickname = document.createElement("span");
-    nickname.classList.add("nickname");
-    nickname.textContent = `${participant.nickname}${suffix}${ping}`;
+    nickname.className = "text-sm text-slate-100";
+    nickname.textContent = `${participant.nickname}${suffix}`;
     playerName.appendChild(nickname);
 
     const level = pingLevelFromMs(participant.pingMs);
+    const pingWrap = document.createElement("span");
+    pingWrap.className = "ml-auto flex items-center gap-2 text-xs text-slate-200";
     const wifi = document.createElement("span");
-    wifi.classList.add("wifi");
-    wifi.setAttribute("data-level", level);
+    wifi.className = "flex items-end gap-1";
     wifi.setAttribute("aria-label", "Connection strength");
 
-    ["b1", "b2", "b3", "b4"].forEach((barClass) => {
+    [2, 3, 4, 5].forEach((height, index) => {
       const bar = document.createElement("span");
-      bar.classList.add("bar", barClass);
+      bar.className = `h-${height} w-1 rounded-sm bg-slate-700`;
+      bar.setAttribute("data-bar", String(index + 1));
       wifi.appendChild(bar);
     });
+    applyWifiBars(wifi, level);
+
+    const pingLabel = document.createElement("span");
+    pingLabel.textContent =
+      typeof participant.pingMs === "number" ? `${Math.round(participant.pingMs)}ms` : "--";
+    pingWrap.appendChild(wifi);
+    pingWrap.appendChild(pingLabel);
 
     const kickButton = document.createElement("button");
-    kickButton.classList.add("kick");
+    kickButton.className =
+      "inline-flex h-7 w-7 items-center justify-center rounded-full border border-rose-500/40 text-xs font-semibold text-rose-300 transition hover:border-rose-400 hover:bg-rose-500/20";
     kickButton.setAttribute("data-kick-id", participant.id);
-    kickButton.textContent = "Kick";
+    kickButton.setAttribute("aria-label", "Kick");
+    kickButton.setAttribute("title", "Kick");
+    kickButton.textContent = "\u00D7";
 
     listItem.appendChild(playerName);
-    listItem.appendChild(wifi);
+    listItem.appendChild(pingWrap);
     listItem.appendChild(kickButton);
     fragment.appendChild(listItem);
   });
@@ -193,16 +200,35 @@ const renderHostList = (listEl, countEl, items, room, options = {}) => {
   };
 };
 
+const buildFallbackJoinUrls = () => {
+  const origin = window.location.origin || "";
+  const joinUrl = origin ? `${origin}/` : "/";
+  return [joinUrl];
+};
+
+const applyHostData = (data) => {
+  const joinUrls = data?.joinUrls?.length ? data.joinUrls : buildFallbackJoinUrls();
+  primaryJoinUrl = joinUrls[0] || "/";
+  if (qrImg) {
+    if (data?.qrDataUrl) {
+      qrImg.src = data.qrDataUrl;
+    } else {
+      const qrUrl = `${QR_FALLBACK_ENDPOINT}?size=240x240&data=${encodeURIComponent(
+        primaryJoinUrl
+      )}`;
+      qrImg.src = qrUrl;
+    }
+  }
+};
+
 fetch(hostDataEndpoint)
   .then((res) => res.json())
   .then((data) => {
-    qrImg.src = data.qrDataUrl;
-    const joinUrls = data.joinUrls || [];
-    primaryJoinUrl = joinUrls[0] || "/";
-    renderJoinUrls(joinListEl, joinUrls);
+    applyHostData(data);
     connectHost();
   })
   .catch((error) => {
     console.error(error);
     statusEl.textContent = "Failed to load host data.";
+    applyHostData(null);
   });

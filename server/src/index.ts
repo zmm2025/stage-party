@@ -78,6 +78,7 @@ const buildJoinUrls = (hostHeader: string, protocol: string) => {
 
 // Static assets (client UI + Colyseus client library).
 app.use("/vendor", express.static(vendorPath));
+app.use("/client", express.static(clientPath));
 app.use(express.static(clientPath));
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
