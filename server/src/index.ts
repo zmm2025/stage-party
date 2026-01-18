@@ -17,30 +17,12 @@ const app = express();
 const clientPath = path.resolve(__dirname, "..", "..", "client");
 const vendorPath = path.resolve(__dirname, "..", "node_modules", "colyseus.js", "dist");
 
-const parseEnvBool = (value: string | undefined, fallback: boolean) => {
-  if (value === undefined) {
-    return fallback;
-  }
-  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
-};
-
-const parseEnvNumber = (value: string | undefined) => {
-  if (value === undefined) {
-    return null;
-  }
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    return null;
-  }
-  return Math.floor(parsed);
-};
-
 const lobbyConfig = {
-  requireReady: parseEnvBool(process.env.LOBBY_REQUIRE_READY, false),
-  allowRejoin: parseEnvBool(process.env.LOBBY_ALLOW_REJOIN, true),
-  allowMidgameJoin: parseEnvBool(process.env.LOBBY_ALLOW_MIDGAME_JOIN, false),
-  maxPlayers: parseEnvNumber(process.env.LOBBY_MAX_PLAYERS),
-  maxSpectators: parseEnvNumber(process.env.LOBBY_MAX_SPECTATORS)
+  requireReady: false,
+  allowRejoin: true,
+  allowMidgameJoin: false,
+  maxPlayers: null,
+  maxSpectators: null
 };
 
 const getLanAddresses = () => {

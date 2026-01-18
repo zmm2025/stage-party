@@ -78,7 +78,7 @@ All endpoints below are intended for Unity host integrations and are restricted 
   - `{ targetId: string }`
   - returns `{ ok: true, targetId: string }`
 
-## Lobby environment configuration
+## Lobby configuration sources
 
-- `LOBBY_MAX_PLAYERS` (number): maximum number of player slots (unset = unlimited).
-- `LOBBY_MAX_SPECTATORS` (number): maximum number of spectator slots (unset = unlimited).
+Lobby settings are configured through the host UI or the HTTP endpoints above. Environment
+variables are no longer used for lobby configuration.
