@@ -36,19 +36,37 @@ const parseEnvNumber = (value: string | undefined) => {
   return Math.floor(parsed);
 };
 
-const lobbyConfig = {
+type LobbyConfig = {
+  allowRejoin: boolean;
+  allowMidgameJoin: boolean;
+  maxPlayers: number | null;
+  maxSpectators: number | null;
+};
+
+type LobbyStateSnapshot = {
+  lobbyLocked: boolean;
+  phase: "lobby" | "in-game";
+};
+
+const lobbyConfig: LobbyConfig = {
   allowRejoin: parseEnvBool(process.env.LOBBY_ALLOW_REJOIN, true),
   allowMidgameJoin: parseEnvBool(process.env.LOBBY_ALLOW_MIDGAME_JOIN, false),
   maxPlayers: parseEnvNumber(process.env.LOBBY_MAX_PLAYERS) ?? 8,
   maxSpectators: parseEnvNumber(process.env.LOBBY_MAX_SPECTATORS)
 };
 
-const lobbyOptions = {
+const lobbyOptions: {
+  config: LobbyConfig;
+  lobbyLocked: boolean;
+  phase: "lobby" | "in-game";
+  onConfigUpdate: (nextConfig: LobbyConfig) => void;
+  onStateUpdate: (nextState: LobbyStateSnapshot) => void;
+} = {
   config: lobbyConfig,
   lobbyLocked: false,
   phase: "lobby" as "lobby" | "in-game",
   onConfigUpdate: (_nextConfig: typeof lobbyConfig) => {},
-  onStateUpdate: (_nextState: { lobbyLocked: boolean; phase: "lobby" | "in-game" }) => {}
+  onStateUpdate: (_nextState: LobbyStateSnapshot) => {}
 };
 
 const updateLobbyConfig = (nextConfig: typeof lobbyConfig) => {
@@ -213,7 +231,6 @@ const buildJoinUrls = (hostHeader: string, protocol: string) => {
 // Static assets (client UI + Colyseus client library).
 app.use("/vendor", express.static(vendorPath));
 app.use("/client", express.static(clientPath));
-app.use(express.static(clientPath));
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
@@ -271,9 +288,11 @@ app.post("/lobby-phase", async (req, res) => {
 });
 
 // Host page and QR payload endpoint.
-app.get("/host", (_req, res) => {
+app.get(["/host", "/host/"], (_req, res) => {
   res.sendFile(path.join(clientPath, "host.html"));
 });
+
+app.use(express.static(clientPath));
 
 app.get("/host-data", async (req, res) => {
   const hostHeader = req.headers.host ?? `localhost:${port}`;
