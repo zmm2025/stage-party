@@ -121,7 +121,9 @@ const connectHost = () => {
         renderHostList(playersEl, playerCountEl, state.players || [], room, {
           defaultAvatar: DEFAULT_AVATAR
         });
-        renderHostList(spectatorsEl, spectatorCountEl, state.spectators || [], room);
+        renderHostList(spectatorsEl, spectatorCountEl, state.spectators || [], room, {
+          defaultAvatar: DEFAULT_AVATAR
+        });
         updateStartButton(state);
         lobbyLocked = Boolean(state?.settings?.lobbyLocked);
         updateLockButton();

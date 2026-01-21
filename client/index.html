@@ -88,30 +88,18 @@
               aria-label="Avatar selection"
             ></div>
           </div>
-          <div class="mode-row flex flex-wrap gap-3">
-            <label class="flex-1">
-              <input type="radio" name="join-mode" value="player" class="peer sr-only" checked />
-              <span
-                class="flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 transition peer-checked:border-amber-400 peer-checked:text-amber-200"
-              >
-                Play
-              </span>
-            </label>
-            <label class="flex-1">
-              <input type="radio" name="join-mode" value="spectator" class="peer sr-only" />
-              <span
-                class="flex w-full items-center justify-center rounded-2xl border border-slate-700 bg-slate-950/70 px-3 py-2 text-sm font-semibold text-slate-200 transition peer-checked:border-amber-400 peer-checked:text-amber-200"
-              >
-                Spectate
-              </span>
-            </label>
-          </div>
           <div class="flex flex-wrap gap-3">
             <button
-              id="join"
+              id="play"
               class="flex-1 rounded-2xl bg-amber-400 px-4 py-3 text-base font-semibold text-slate-900 shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-amber-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Join lobby
+              Play
+            </button>
+            <button
+              id="spectate"
+              class="flex-1 rounded-2xl border border-slate-700 bg-slate-900/80 px-4 py-3 text-base font-semibold text-slate-100 transition hover:border-amber-400/60 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Spectate
             </button>
             <button
               id="leave"

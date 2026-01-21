@@ -31,7 +31,7 @@ This folder documents client/host/server message formats.
 - `server:event` payload:
   - `{ from: string, receivedAt: number, message: { type: string, payload?: unknown } }`
   - `message.type = "welcome"` payload:
-    - `{ sessionId: string, nickname: string, token: string, role: "player" | "spectator", avatar?: string, rejoined?: boolean }`
+    - `{ sessionId: string, nickname: string, token: string, role: "player" | "spectator", avatar: string, rejoined?: boolean }`
 - `joinOrCreate("lobby")` can reject with errors encoded as JSON in the error message:
   - `{ code: "LOBBY_LOCKED", message: string }` when the host locks the lobby.
   - `{ code: "MIDGAME_JOIN_DISABLED", message: string }` when mid-game joins are disabled.
@@ -39,7 +39,7 @@ This folder documents client/host/server message formats.
 - `server:pong` payload:
   - `{ sentAt: number, receivedAt: number, pingMs: number | null }`
 - `lobby:state` payload:
-  - `{ count: number, totalCount: number, phase: "lobby" | "in-game", settings: { allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean, maxPlayers: number | null, maxSpectators: number | null }, players: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null, avatar: string }>, spectatorCount: number, totalSpectatorCount: number, spectators: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null }> }`
+  - `{ count: number, totalCount: number, phase: "lobby" | "in-game", settings: { allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean, maxPlayers: number | null, maxSpectators: number | null }, players: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null, avatar: string }>, spectatorCount: number, totalSpectatorCount: number, spectators: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null, avatar: string }> }`
 - `lobby:config` payload:
   - `{ settings: { allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean, maxPlayers: number | null, maxSpectators: number | null }, phase: "lobby" | "in-game" }`
 - `game:start` payload:

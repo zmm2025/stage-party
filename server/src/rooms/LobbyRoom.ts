@@ -130,7 +130,7 @@ export class LobbyRoom extends Room {
       }
 
       const participant = this.participants.get(participantId);
-      if (!participant || participant.role !== "player") {
+      if (!participant) {
         return;
       }
 
@@ -297,7 +297,7 @@ export class LobbyRoom extends Room {
 
     if (existingParticipant && playerToken && this.config.allowRejoin) {
       existingParticipant.connected = true;
-      if (existingParticipant.role === "player" && !existingParticipant.avatar) {
+      if (!existingParticipant.avatar) {
         existingParticipant.avatar = DEFAULT_AVATAR;
       }
       this.sessionToParticipant.set(client.sessionId, playerToken);
@@ -312,10 +312,7 @@ export class LobbyRoom extends Room {
             token: existingParticipant.token,
             rejoined: true,
             role: existingParticipant.role,
-            avatar:
-              existingParticipant.role === "player"
-                ? existingParticipant.avatar ?? DEFAULT_AVATAR
-                : undefined
+            avatar: existingParticipant.avatar ?? DEFAULT_AVATAR
           }
         }
       });
@@ -333,8 +330,7 @@ export class LobbyRoom extends Room {
     }
 
     const nickname = this.makeNickname(options?.nickname ?? "", client.sessionId, role);
-    const avatar =
-      role === "player" ? this.normalizeAvatar(options?.avatar) ?? DEFAULT_AVATAR : undefined;
+    const avatar = this.normalizeAvatar(options?.avatar) ?? DEFAULT_AVATAR;
     const token = playerToken || randomUUID();
     const participant: ParticipantInfo = {
       nickname,
@@ -401,7 +397,8 @@ export class LobbyRoom extends Room {
         id,
         nickname: info.nickname,
         connected: info.connected,
-        pingMs: info.lastPingMs ?? null
+        pingMs: info.lastPingMs ?? null,
+        avatar: info.avatar ?? DEFAULT_AVATAR
       }));
 
     const connectedPlayers = players.filter((player) => player.connected);
