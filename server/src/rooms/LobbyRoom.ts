@@ -382,37 +382,11 @@ export class LobbyRoom extends Room {
   }
 
   private broadcastState() {
-    const players = [...this.participants.entries()]
-      .filter(([, info]) => info.role === "player")
-      .map(([id, info]) => ({
-        id,
-        nickname: info.nickname,
-        connected: info.connected,
-        pingMs: info.lastPingMs ?? null,
-        avatar: info.avatar ?? DEFAULT_AVATAR
-      }));
-    const spectators = [...this.participants.entries()]
-      .filter(([, info]) => info.role === "spectator")
-      .map(([id, info]) => ({
-        id,
-        nickname: info.nickname,
-        connected: info.connected,
-        pingMs: info.lastPingMs ?? null,
-        avatar: info.avatar ?? DEFAULT_AVATAR
-      }));
+    this.broadcast("lobby:state", this.buildStateSnapshot());
+  }
 
-    const connectedPlayers = players.filter((player) => player.connected);
-
-    this.broadcast("lobby:state", {
-      players,
-      spectators,
-      count: connectedPlayers.length,
-      totalCount: players.length,
-      spectatorCount: spectators.filter((spectator) => spectator.connected).length,
-      totalSpectatorCount: spectators.length,
-      phase: this.phase,
-      settings: { ...this.config, lobbyLocked: this.lobbyLocked }
-    });
+  public getStateSnapshot() {
+    return this.buildStateSnapshot();
   }
 
   private markStateDirty() {
@@ -463,6 +437,40 @@ export class LobbyRoom extends Room {
       (participant) => participant.role === role
     ).length;
     return count >= limit;
+  }
+
+  private buildStateSnapshot() {
+    const players = [...this.participants.entries()]
+      .filter(([, info]) => info.role === "player")
+      .map(([id, info]) => ({
+        id,
+        nickname: info.nickname,
+        connected: info.connected,
+        pingMs: info.lastPingMs ?? null,
+        avatar: info.avatar ?? DEFAULT_AVATAR
+      }));
+    const spectators = [...this.participants.entries()]
+      .filter(([, info]) => info.role === "spectator")
+      .map(([id, info]) => ({
+        id,
+        nickname: info.nickname,
+        connected: info.connected,
+        pingMs: info.lastPingMs ?? null,
+        avatar: info.avatar ?? DEFAULT_AVATAR
+      }));
+
+    const connectedPlayers = players.filter((player) => player.connected);
+
+    return {
+      players,
+      spectators,
+      count: connectedPlayers.length,
+      totalCount: players.length,
+      spectatorCount: spectators.filter((spectator) => spectator.connected).length,
+      totalSpectatorCount: spectators.length,
+      phase: this.phase,
+      settings: { ...this.config, lobbyLocked: this.lobbyLocked }
+    };
   }
 
   private getCapacityError(role: ParticipantRole) {

@@ -54,6 +54,11 @@ This folder documents client/host/server message formats.
 - `GET /host-data` returns:
   - `{ joinUrls: string[], qrDataUrl: string }`
 
+## Lobby state endpoint
+
+- `GET /lobby-state` returns:
+  - `{ count: number, totalCount: number, phase: "lobby" | "in-game", settings: { allowRejoin: boolean, allowMidgameJoin: boolean, lobbyLocked: boolean, maxPlayers: number | null, maxSpectators: number | null }, players: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null, avatar: string }>, spectatorCount: number, totalSpectatorCount: number, spectators: Array<{ id: string, nickname: string, connected: boolean, pingMs: number | null, avatar: string }> }`
+
 ## Host control endpoints
 
 - `GET /lobby-settings` returns:

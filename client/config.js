@@ -1,4 +1,5 @@
 window.AppConfig = {
   roomName: "lobby",
-  hostDataEndpoint: "/host-data"
+  hostDataEndpoint: "/host-data",
+  lobbyStateEndpoint: "/lobby-state"
 };

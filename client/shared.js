@@ -43,64 +43,79 @@ window.AppShared = {
     const protocol = location.protocol === "https:" ? "wss" : "ws";
     return protocol + "://" + location.host;
   },
-  renderPlayers(playersEl, countEl, state) {
+  renderPlayers(playersEl, countEl, spectatorsEl, spectatorCountEl, state) {
     if (countEl) {
       countEl.textContent = state.count ?? 0;
     }
-    if (!playersEl) {
-      return;
+    if (spectatorCountEl) {
+      spectatorCountEl.textContent = state.spectatorCount ?? 0;
     }
 
-    const fragment = document.createDocumentFragment();
-    (state.players || []).forEach((player) => {
-      const listItem = document.createElement("li");
-      listItem.className =
-        "flex items-center justify-between gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 px-3 py-2";
-
-      const playerName = document.createElement("span");
-      playerName.className = "flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-100";
-
-      if (player.avatar) {
-        const avatar = document.createElement("span");
-        avatar.className =
-          "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-base";
-        avatar.setAttribute("aria-hidden", "true");
-        avatar.textContent = player.avatar;
-        playerName.appendChild(avatar);
+    const renderList = (listEl, participants) => {
+      if (!listEl) {
+        return;
       }
 
-      const tags = [];
-      if (player.connected === false) {
-        tags.push("away");
-      }
-      const suffix = tags.length ? ` (${tags.join(", ")})` : "";
-      const ping =
-        typeof player.pingMs === "number" ? ` - ${Math.round(player.pingMs)}ms` : "";
+      const fragment = document.createDocumentFragment();
+      (participants || []).forEach((player) => {
+        const listItem = document.createElement("li");
+        listItem.className =
+          "flex items-center gap-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 px-3 py-2";
 
-      const nickname = document.createElement("span");
-      nickname.className = "text-sm text-slate-100";
-      nickname.textContent = `${player.nickname}${suffix}${ping}`;
-      playerName.appendChild(nickname);
+        const playerName = document.createElement("span");
+        playerName.className =
+          "flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-100";
 
-      const level = window.AppShared.pingLevelFromMs(player.pingMs);
-      const wifi = document.createElement("span");
-      wifi.className = "flex items-end gap-1";
-      wifi.setAttribute("aria-label", "Connection strength");
+        if (player.avatar) {
+          const avatar = document.createElement("span");
+          avatar.className =
+            "inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950 text-base";
+          avatar.setAttribute("aria-hidden", "true");
+          avatar.textContent = player.avatar;
+          playerName.appendChild(avatar);
+        }
 
-      [2, 3, 4, 5].forEach((height, index) => {
-        const bar = document.createElement("span");
-        bar.className = `h-${height} w-1 rounded-sm ${WIFI_INACTIVE_CLASS}`;
-        bar.setAttribute("data-bar", String(index + 1));
-        wifi.appendChild(bar);
+        const tags = [];
+        if (player.connected === false) {
+          tags.push("away");
+        }
+        const suffix = tags.length ? ` (${tags.join(", ")})` : "";
+        const nickname = document.createElement("span");
+        nickname.className = "text-sm text-slate-100";
+        nickname.textContent = `${player.nickname}${suffix}`;
+        playerName.appendChild(nickname);
+
+        const level = window.AppShared.pingLevelFromMs(player.pingMs);
+        const pingWrap = document.createElement("span");
+        pingWrap.className = "ml-auto flex items-center gap-2 text-xs text-slate-200";
+        const wifi = document.createElement("span");
+        wifi.className = "flex items-end gap-1";
+        wifi.setAttribute("aria-label", "Connection strength");
+
+        [2, 3, 4, 5].forEach((height, index) => {
+          const bar = document.createElement("span");
+          bar.className = `h-${height} w-1 rounded-sm ${WIFI_INACTIVE_CLASS}`;
+          bar.setAttribute("data-bar", String(index + 1));
+          wifi.appendChild(bar);
+        });
+        updateWifiBars(wifi, level);
+
+        const pingLabel = document.createElement("span");
+        pingLabel.textContent =
+          typeof player.pingMs === "number" ? `${Math.round(player.pingMs)}ms` : "--";
+        pingWrap.appendChild(wifi);
+        pingWrap.appendChild(pingLabel);
+
+        listItem.appendChild(playerName);
+        listItem.appendChild(pingWrap);
+        fragment.appendChild(listItem);
       });
-      updateWifiBars(wifi, level);
 
-      listItem.appendChild(playerName);
-      listItem.appendChild(wifi);
-      fragment.appendChild(listItem);
-    });
+      listEl.replaceChildren(fragment);
+    };
 
-    playersEl.replaceChildren(fragment);
+    renderList(playersEl, state.players);
+    renderList(spectatorsEl, state.spectators);
   },
   renderJoinUrls(joinListEl, urls) {
     if (joinListEl) {

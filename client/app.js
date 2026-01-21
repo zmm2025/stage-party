@@ -6,13 +6,15 @@ const avatarSection = document.getElementById("avatar-section");
 const avatarPicker = document.getElementById("avatar-picker");
 const playerCountEl = document.getElementById("player-count");
 const playersEl = document.getElementById("players");
+const spectatorCountEl = document.getElementById("spectator-count");
+const spectatorsEl = document.getElementById("spectators");
 const pingValueEl = document.getElementById("ping-value");
 const pingWifiEl = document.getElementById("ping-wifi");
 const nicknameClearButton = document.getElementById("nickname-clear");
 const nicknameSaveButton = document.getElementById("nickname-save");
 const leaveButton = document.getElementById("leave");
 
-const { roomName } = window.AppConfig;
+const { roomName, lobbyStateEndpoint } = window.AppConfig;
 const {
   ensureColyseus,
   getWsEndpoint,
@@ -24,6 +26,7 @@ const {
 let room = null;
 let playerToken = localStorage.getItem("lpk_player_token");
 let pingInterval = null;
+let lobbyStateInterval = null;
 let currentRole = "player";
 let currentAvatar = "";
 let nicknameValue = "";
@@ -163,6 +166,7 @@ const connect = async (roleOverride) => {
       avatar: avatar || undefined
     });
     statusEl.textContent = "Connected.";
+    stopLobbyStatePolling();
     updateAvatarUi();
     updateJoinUi();
     updateNicknameControls();
@@ -212,11 +216,11 @@ const connect = async (roleOverride) => {
       room = null;
       updateJoinUi();
       updateNicknameControls();
+      startLobbyStatePolling();
     });
 
     room.onMessage("lobby:state", (state) => {
-      renderPlayers(playersEl, playerCountEl, state);
-      updateAvatarUi(state);
+      applyLobbyState(state);
     });
 
     startPingLoop();
@@ -255,6 +259,7 @@ leaveButton?.addEventListener("click", () => {
   }
   updateJoinUi();
   updateNicknameControls();
+  startLobbyStatePolling();
 });
 
 nicknameInput.addEventListener("keydown", (event) => {
@@ -441,6 +446,46 @@ const updateAvatarUi = (state) => {
   }
 };
 
+const applyLobbyState = (state) => {
+  if (!state) {
+    return;
+  }
+  renderPlayers(playersEl, playerCountEl, spectatorsEl, spectatorCountEl, state);
+  updateAvatarUi(state);
+};
+
+const fetchLobbyState = () => {
+  const endpoint = lobbyStateEndpoint || "/lobby-state";
+  return fetch(endpoint)
+    .then((res) => (res.ok ? res.json() : null))
+    .then((state) => {
+      if (!room) {
+        applyLobbyState(state);
+      }
+    })
+    .catch((error) => {
+      console.error("Failed to fetch lobby state.", error);
+    });
+};
+
+const startLobbyStatePolling = () => {
+  if (room) {
+    return;
+  }
+  if (lobbyStateInterval) {
+    clearInterval(lobbyStateInterval);
+  }
+  fetchLobbyState();
+  lobbyStateInterval = setInterval(fetchLobbyState, 2000);
+};
+
+const stopLobbyStatePolling = () => {
+  if (lobbyStateInterval) {
+    clearInterval(lobbyStateInterval);
+    lobbyStateInterval = null;
+  }
+};
+
 const sendPing = () => {
   if (!room) {
     return;
@@ -459,3 +504,4 @@ const startPingLoop = () => {
 updateAvatarUi();
 updateJoinUi();
 updateNicknameControls();
+startLobbyStatePolling();

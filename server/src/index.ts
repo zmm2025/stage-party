@@ -312,6 +312,31 @@ app.get("/host-data", async (req, res) => {
   }
 });
 
+app.get("/lobby-state", async (_req, res) => {
+  try {
+    const rooms = await matchMaker.query({ name: "lobby" });
+    const roomId = rooms[0]?.roomId;
+    if (roomId) {
+      const state = await matchMaker.remoteRoomCall(roomId, "getStateSnapshot", []);
+      res.json(state);
+      return;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+
+  res.json({
+    players: [],
+    spectators: [],
+    count: 0,
+    totalCount: 0,
+    spectatorCount: 0,
+    totalSpectatorCount: 0,
+    phase: lobbyOptions.phase,
+    settings: { ...lobbyConfig, lobbyLocked: lobbyOptions.lobbyLocked }
+  });
+});
+
 const server = http.createServer(app);
 const gameServer = new Server({
   transport: new WebSocketTransport({ server })
