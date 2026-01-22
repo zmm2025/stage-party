@@ -250,6 +250,7 @@ leaveButton?.addEventListener("click", () => {
   if (!room) {
     return;
   }
+  room.send("client:leave");
   room.leave();
   room = null;
   statusEl.textContent = "Left lobby.";

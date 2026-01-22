@@ -167,6 +167,13 @@ export class LobbyRoom extends Room {
       });
     });
 
+    this.onMessage("client:leave", (client) => {
+      if (this.hostSessions.has(client.sessionId)) {
+        return;
+      }
+      this.removeParticipantBySession(client.sessionId);
+    });
+
     this.onMessage("host:start", (client) => {
       if (!this.hostSessions.has(client.sessionId)) {
         return;
@@ -599,6 +606,16 @@ export class LobbyRoom extends Room {
     }
 
     this.participants.delete(token);
+    this.markStateDirty();
+  }
+
+  private removeParticipantBySession(sessionId: string) {
+    const participantId = this.sessionToParticipant.get(sessionId);
+    if (!participantId) {
+      return;
+    }
+    this.participants.delete(participantId);
+    this.sessionToParticipant.delete(sessionId);
     this.markStateDirty();
   }
 
